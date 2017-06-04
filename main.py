@@ -5,20 +5,27 @@ import subprocess
 
 def main():
     count_list = dict()
+    if os.path.isfile('cluster_num__count'):
+        with open('cluster_num__count') as r:
+            for line in r:
+                cluster_num, num_citation = line.split(',')
+                count_list[cluster_num] = num_citation
+
     with open('title') as f:
         for line in f:
-            cluster_num, title = line.split(' ', 1)
+            cluster_num, title = line.split('\t', 1)
             if cluster_num not in count_list:
+                print(cluster_num, title)
                 num_citation = google_scholar_search(title[:-1])
                 count_list[cluster_num] = num_citation
-                with open('citation_count', 'a+') as w:
+                with open('cluster_num__count', 'a+') as w:
                     writer = csv.writer(w)
                     writer.writerow([cluster_num, num_citation])
     print(len(count_list))
 
 
 def google_scholar_search(title):
-    proc = subprocess.run(['python3', 'scholar.py', '--csv-header', '-s', '"' + title + '"'], check=True,
+    proc = subprocess.run(['python3', 'scholar.py', '-s', '"' + title + '"', '--cookie-file', '/Users/byeonghyeonyou/Downloads/cookies.txt', '--csv-header'], check=True,
                           stdout=subprocess.PIPE)
     return get_citation_count(proc.stdout.decode('utf-8'), title)
 
@@ -36,12 +43,13 @@ def get_citation_count(stdout, title):
     else:
         for i in range(len(title_citation_list)):
             print(i, title_citation_list[i])
+        raw_input = input("Choose proper title for " + '"' + title + '": ')
         try:
-            num = int(input("Choose proper title for " + '"' + title + '": '))
+            num = int(raw_input)
             title_citation = title_citation_list[num]
             return title_citation[1]
         except:
-            print(num, "is not integer in range")
+            print(raw_input, "is not integer in range")
             return None
 
 
